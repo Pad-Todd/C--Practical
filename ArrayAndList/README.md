@@ -78,7 +78,7 @@ var average = number.Average();
 var average = Z.Avaerage(x => x.Y)
 
 // LINQ 미사용
-int sum = 0;
+int sum = 0;1
 foreach(int n in numbers)
 {
     sum += n;
@@ -86,3 +86,32 @@ foreach(int n in numbers)
 double average = (double)sum / number.Count;
 ```
 - LINQ의 Average() 메서드를 이용하여 평균값을 계산할 수 있다.
+
+### 최솟값 최댓값
+
+```CSharp
+var numbers = new List<int> { 9, 7, 3, -2, 8,0 ,1,2};
+// 최솟값
+var min = number.Where(n > 0)
+                .Min();
+// 최댓값
+var maxNumber = number.Max();
+```
+- 최솟값은 Min(), 최댓값은 Max() 메서드를 사용한다.
+
+### 조건 일치 요소
+
+```CSharp
+var numebr = new List<int> { 9, 45,3, 8,7,-8,-34};
+// 갯수 세기
+var count = number.Count(n => n == 0);
+// 조건에 맞는 요소 하나이상
+var exists = number.Any(n => n & 7 == 0);
+// 조건에 맞는 요소가 모든요소
+var isAllTrue = number.All(n => n > 0);
+```
+- Count 메서드는 조건이 일치하는 요소의 갯수를 셀 수 있다.
+- Any 메서드는 조건이 일치하는 요소가 존재하는 여부를 알 수 있다. true or false
+- All 메서드는 컬렉션의 모든 요소가 조건을 만족하는지 확인 할 수 있다.
+- 일치 여부를 확인하는 경우 Count 보다 Any 메서드를 활용하자 !
+
