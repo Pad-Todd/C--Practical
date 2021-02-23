@@ -89,6 +89,7 @@ foreach(var item int flowerDict)
 ```CSharp
 LINQ 사용하기
 // 딕셔너리에 저장된 값의 평균 구하기
+
 var average = flowerDict.Average(x => x.Value);
 // 딕셔너리에 저장된 값의 합계 구하기
 var total = flowerDict.Sum(x => x.Value);
@@ -101,3 +102,139 @@ var items = flowerDict.Where(x => x.Key.Length < 5);
 foreach (var key in flowerDick.Keys)
     Console.WriteLine(key);
 - Dictionary<TKey, TValue> 클래스에 있는 Keys 속성을 이용하여 저장된 모든 키를 열거 할 수 있다.
+```
+---
+## 7.2 딕셔너리 응용
+- LINQ에 있는  ToDictionary 메서드를 사용하변 배열이나 리스트를 딕셔너리 형으로 변화할 수 있다.
+
+### 7.2.1 딕셔너리로 변환
+```CSharp
+var employees = new List<Employlee>();
+var employeeeDict = employees.ToDictionary(emp => emp.Code);
+```
+
+- ToDictionary 메서드에서 첫 번째 인수를 람다식으로 넘겨준다.
+
+- 이 첫 번째 인수가 Key가 되어 해당 객체의 Value로 이용해 딕셔러니를 구성한다.
+
+### 7.2.2 딕셔너리로 부터 다른 딕셔너리를 생성한다.
+```CSharp
+var flowerDict = new Dictionary<string, int>()
+{
+    {"sunflower", 400},
+    {"pansy", 300},
+    {"tulip", 200},
+    {"rose", 500},
+    {"dahila", 400},
+};
+
+var newDict = flowerDict.Where(x => x.Value >= 400)
+                        .ToDictionary(flower => flower.Key, flower => flower.Value);
+
+foreach (var item in newDict.Keys)
+{
+    Console.WriteLine(item);
+}
+```
+
+- 조건에 의해 일치하는 것만 빼내서 새로운 딕셔너리를 생성할 수 있다.
+- 리스트를 딕셔너리로 변환하는 방법과 달리 두 번째 인수에 어떤 객체를 값으로 이용할지 지정할 수 있다.
+
+## 7.2.3 사용자 지정 클래스를 키로 이용
+```CSharp
+// 예제 클래스
+class MonthDay
+{
+    public int Day { get; private set; }
+    public int Month { get; private set; }
+    public MonthDay(int month, int day)
+    {
+        this.Month = month;
+        this.Day = day;
+    }
+    //MonthDay끼리 비교
+    public override bool Equals(object obj)
+    {
+        var other = obj as MonthDay;
+        if (other == null)
+            throw new ArgumentException();
+        return this.Day == other.Day && this.Month == other.Month;
+    }
+    // 해시코드 
+    public override int GetHashCode()
+    {
+        return Month.GetHashCode() * 31 + Day.GetHashCode();
+    }
+}
+
+// 사용자 지정 클래스가 Key인 딕셔너리 
+var dict = new Dictionary<MonthDay, string>
+{
+    { new MonthDay(6, 6), "현충일"},
+    { new MonthDay(8, 15), "광복절"},
+    { new MonthDay(10, 3), "개천절"}
+};
+var md = new MonthDay(8,15);
+var s = dict[md];
+Console.WriteLine(s);
+```
+- 해시코드는 객체의 값을 가지고 일정한 계산을 수행하여 구한 int형 값을 의미하며 딕셔너리의 내부에서는 값을 찾을 때 인덱스로 이용한다.
+- 같은 객체로 부터 항상 같은 해시값이 생성되어야 하며, 이 해시값을 통해 분랭의 객체를 복원할 수 없다.
+- GatHashCode 메서드에서 31은 해시값이 서로 다르게 퍼지게 하는 의미를 지니며 다른 소수를 사용할 수 도 있다.
+- 이제 해시 값이 동일한 경우 Equals메서드를 통해 객체가 같은지 판단 할 수 있다.
+
+## 7.2.4 키 저장
+
+- 딕셔너리 사용시 키에 대응하는 값이 중요하지 않을 때가 있다.
+- 이러한 경우 딕서너리와 비슷한 HashSet<T>클래스를 사용해 보자
+- HashSet<T>클래스는 Dictionary<TKey, TValue>와 비슷하지만 키 부분만 저장하고 값은 저장하지 않는다는 점이 있다.
+- 즉 HashSet<T>클래스는 중복을 허용하지 않는 요소의 집합을 나타낸다.
+
+```CSharp
+class WordsExtractor
+{
+    private string[] _lines;
+    
+    public WordsExtractor(string[] lines)
+    {
+        _lines = lines;
+
+    }
+
+    // 10문장 이상인 단어를 중복 없이 알파벳순서로 열거한다.
+    public IEnumerable<string> Extract()
+    {
+        // Hash객체 생성
+        var hash = new HashSet<string>();
+        foreach (var line in _lines)
+        {
+            var words = GetWords(line);
+            foreach (var word in words)
+            {
+                if (word.Length >= 10)
+                    //hash 단어 등록
+                    hash.Add(word.ToLower());
+            }
+        }
+        return hash.OrderBy(s => s);
+    }
+
+    // 단어로 분할할 때 사용되는 분리자
+    // 문자 배열을 초기화하기보다는 ToCharArray메서드를 사용하는 것이 편하다.
+    private char[] _seqarators = @"!?"",.".ToCharArray();
+
+    // 1행부터 단어를 꺼내서 열거한다.
+    private IEnumerable<string> GetWords(string line)
+    {
+        var items = line.Split(_seqarators, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var item in items)
+        {
+            var index = item.IndexOf("'");
+            var word = index <= 0 ? item : item.Substrig(0, index);
+
+            if (word.ToLower().All(c => 'a' <= c && c <= 'z'))
+                yield return word;
+        }
+    }
+}
+```
